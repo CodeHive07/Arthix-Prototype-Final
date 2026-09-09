@@ -1,9 +1,10 @@
 import { analyzeWithRulesEngine, getRulesSnapshot } from './rules-engine';
 import type { ProjectData } from './arthix-rules';
-import { generateGroundedAnswer } from './llm-provider';
+import { generateGroundedAnswer, llmProvider } from './llm-provider';
+import { retrieveOfficialPages } from './official-sources';
 
 export type RagCitation = { id: string; title: string; authority: string; url: string; version: string; relevance: number };
-export type RagAnswer = { answer: string; confidence: 'high' | 'medium' | 'low'; citations: RagCitation[]; matchedRules: string[]; boundaries: string[]; provider: 'deterministic' | 'openai' };
+export type RagAnswer = { answer: string; confidence: 'high' | 'medium' | 'low'; citations: RagCitation[]; matchedRules: string[]; boundaries: string[]; provider: 'deterministic' | 'openai' | 'groq' | 'ollama' | 'custom' };
 type Chunk = { id: string; text: string; title: string; authority: string; url: string; version: string; keywords: string[] };
 
 function chunks(project: ProjectData): Chunk[] {
@@ -16,11 +17,19 @@ export async function answerComplianceQuery(query: string, project: ProjectData)
   const selected = ranked.length ? ranked : chunks(project).slice(0, 2).map(chunk => ({ chunk, score: 0 }));
   const first = selected[0]?.chunk;
   const highSignal = ranked[0]?.score >= 2;
-  const answer = first ? highSignal ? `${first.title} is the closest applicable route for this project profile. ${first.text} Review the cited authority guidance before taking action.` : `I found related guidance, but the query is not specific enough for a confident determination. The most relevant route is ${first.title}. ${first.text}` : 'No applicable rule matched this project profile. Add more project details or review the official source registry.';
-  const citations = selected.map(item => ({ id: item.chunk.id, title: item.chunk.title, authority: item.chunk.authority, url: item.chunk.url, version: item.chunk.version, relevance: item.score }));
+  const pages = await retrieveOfficialPages(query, selected.map(item => item.chunk.url));
+  const livePages = pages.filter(page => page.status === 'available');
+  const pageNote = livePages.length ? ` Live official pages were consulted for this answer: ${livePages.map(page => `${page.title} (${page.authority})`).join('; ')}.` : '';
+  const answer = first ? highSignal ? `${first.title} is the closest applicable route for this project profile. ${first.text} Review the cited authority guidance before taking action.${pageNote}` : `I found related guidance, but the query is not specific enough for a confident determination. The most relevant route is ${first.title}. ${first.text}${pageNote}` : `No applicable rule matched this project profile. Add more project details or review the official source registry.${pageNote}`;
+  const citations: RagCitation[] = [
+    ...selected.map(item => ({ id: item.chunk.id, title: item.chunk.title, authority: item.chunk.authority, url: item.chunk.url, version: item.chunk.version, relevance: item.score })),
+    ...livePages.map(page => ({ id: page.id, title: page.title, authority: page.authority, url: page.url, version: `live · ${page.fetchedAt.slice(0, 10)}`, relevance: 1 })),
+  ];
   const deterministic = { answer, confidence: highSignal ? 'high' as const : ranked.length ? 'medium' as const : 'low' as const, citations, matchedRules: ranked.map(item => item.chunk.id), boundaries: ['This is contextual guidance, not legal advice.', 'The responsible authority determines applicability, documentation and approval.', 'Current notifications or local conditions may supersede this indexed rule.', 'Request and inspect citations before acting.'], provider: 'deterministic' as const };
-  const llm = await generateGroundedAnswer({ query, context: selected.map(item => item.chunk.text).join('\n'), citations });
+  const pageContext = livePages.map(page => `Official page ${page.id} — ${page.title} | ${page.authority} | ${page.url}:\n${page.text.slice(0, 2500)}`).join('\n\n');
+  const llm = await generateGroundedAnswer({ query, context: `${selected.map(item => item.chunk.text).join('\n')}${pageContext ? `\n\n${pageContext}` : ''}`, citations });
   if (!llm) return deterministic;
-  return { ...deterministic, answer: llm.answer, confidence: llm.confidence, provider: 'openai' };
+  const label = llmProvider()?.label;
+  return { ...deterministic, answer: llm.answer, confidence: llm.confidence, provider: label && label !== 'none' ? label : 'openai' };
 }
-export function ragHealth() { const snapshot = getRulesSnapshot(); return { provider: process.env.OPENAI_API_KEY ? 'openai-grounded' : 'deterministic', engineVersion: snapshot.engineVersion, indexedRules: snapshot.rules.length, sourceCount: snapshot.sources.length }; }
+export function ragHealth() { const snapshot = getRulesSnapshot(); const provider = llmProvider(); return { provider: provider ? `${provider.label}-grounded` : 'deterministic', llm: provider?.label ?? 'none', officialWebGrounding: true, engineVersion: snapshot.engineVersion, indexedRules: snapshot.rules.length, sourceCount: snapshot.sources.length }; }

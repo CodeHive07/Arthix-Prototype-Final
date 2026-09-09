@@ -27,6 +27,21 @@ Open http://localhost:3000. Local development uses browser workspace storage and
 
 Copy `.env.example` (or `.env.pilot.example` for the Docker pilot stack) to `.env.local` and fill in the values you need. Everything is optional for local development; production prerequisites are listed in [DEPLOYMENT.md](./DEPLOYMENT.md). Never commit `.env` files.
 
+### Compliance Assistant LLM
+
+The Compliance Assistant grounds every answer in indexed rules **and live official government pages** (allowlisted `.gov.in` / `.nic.in` domains only, fetched server-side and cached for 10 minutes). Connect any OpenAI-compatible LLM to have it explain the retrieved sources — it is forced to cite the allowed sources and falls back to deterministic retrieval otherwise:
+
+```ini
+# Groq free tier
+OPENAI_API_KEY=gsk_...
+OPENAI_MODEL=llama-3.3-70b-versatile
+OPENAI_BASE_URL=https://api.groq.com/openai/v1/chat/completions
+
+# or local Ollama (no key needed)
+OPENAI_MODEL=llama3.1
+OPENAI_BASE_URL=http://127.0.0.1:11434/v1/chat/completions
+```
+
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs lint, typecheck, tests and the production build on every push to `main` and on all pull requests.
