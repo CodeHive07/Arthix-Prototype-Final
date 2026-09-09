@@ -1,0 +1,22 @@
+{
+  "realm": "arthix",
+  "enabled": true,
+  "displayName": "Arthix Applicant Access",
+  "registrationAllowed": true,
+  "resetPasswordAllowed": true,
+  "clients": [
+    {
+      "clientId": "arthix-web",
+      "name": "Arthix Web",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "replace-with-a-secret-manager-value",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["http://localhost:3000/api/auth/callback"],
+      "webOrigins": ["http://localhost:3000"],
+      "attributes": { "pkce.code.challenge.method": "S256" }
+    }
+  ]
+}

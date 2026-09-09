@@ -1,0 +1,24 @@
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { ArrowDownToLine, ArrowRight, CircleHelp, X } from 'lucide-react';
+import { createState, type Project, type Role, type State } from '../../lib/udyog';
+
+export default function ProjectDialog({ mode, role, close, replace, exportStatus }: { mode: 'project' | 'reset'; role: Role; close: () => void; replace: (state: State) => void; exportStatus: () => void }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    const element = ref.current;
+    element?.showModal();
+    return () => { element?.close(); previous?.focus(); };
+  }, []);
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (role !== 'Applicant') return;
+    const data = new FormData(event.currentTarget);
+    const name = String(data.get('name') || '').trim();
+    if (!name) { setError('Enter a project name, not only spaces.'); return; }
+    const project: Project = { name, sector: data.get('sector') as Project['sector'], district: String(data.get('district')), stage: data.get('stage') as Project['stage'], workforce: Number(data.get('workforce')), effluent: data.get('effluent') === 'yes', caseId: `US-${new Date().getFullYear()}-${crypto.randomUUID().slice(0, 6).toUpperCase()}` };
+    replace(createState(project));
+  }
+  return <dialog ref={ref} className="uw-dialog" aria-labelledby="uw-dialog-title" onCancel={close} onClick={e => { if (e.target === e.currentTarget) { const r = e.currentTarget.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) close(); } }}><div className="uw-dialog-heading"><span className="uw-eyebrow">{mode === 'project' ? 'A NEW BEGINNING' : 'LOCAL WORKSPACE'}</span><button className="uw-icon-button" aria-label="Close dialog" onClick={close}><X size={20} /></button></div><h2 id="uw-dialog-title">{mode === 'project' ? 'Tell us about your enterprise.' : 'Reset this system workspace?'}</h2>{mode === 'project' ? <><p>Build a checklist from your project profile. This replaces the current local project and its history. Export first if you want to keep a copy.</p><button className="uw-text-button uw-dialog-export" onClick={exportStatus}><ArrowDownToLine size={13} />Export current project</button><form onSubmit={submit}><label className="uw-field">Project / enterprise name<input name="name" required maxLength={100} placeholder="e.g. Sahyadri Precision Works" autoFocus /></label><div className="uw-form-grid"><label className="uw-field">Sector<select name="sector"><option>Manufacturing</option><option>Food processing</option><option>Services</option></select></label><label className="uw-field">District<select name="district"><option>Pune</option><option>Mumbai City</option><option>Thane</option><option>Nashik</option><option>Nagpur</option><option>Chhatrapati Sambhajinagar</option><option>Kolhapur</option><option>Other Maharashtra district</option></select></label><label className="uw-field">Project stage<select name="stage"><option value="Planning">Planning / before establishment</option><option value="Established">Established / controls installed</option><option value="Operating">Operating / verify existing consents</option></select></label><label className="uw-field">Workforce<input name="workforce" type="number" min="0" max="1000000" step="1" required defaultValue="12" /></label></div><label className="uw-field">Does the process generate effluent?<select name="effluent"><option value="no">No process effluent declared</option><option value="yes">Yes, process effluent is generated</option></select></label><div className="uw-info-strip"><CircleHelp size={17} /><span>Official, not a complete legal checklist. Sector and effluent affect consent guidance; workforce adds advisory checks; stage controls the CTO step.</span></div>{error && <p className="uw-issue" role="alert">{error}</p>}<div className="uw-dialog-actions"><button type="button" className="uw-button" onClick={close}>Cancel</button><button className="uw-button uw-primary" disabled={role !== 'Applicant'}>Create project <ArrowRight size={15} /></button></div>{role !== 'Applicant' && <p className="uw-issue">Switch to Applicant to create a project.</p>}</form></> : <><p>This removes this browser's project, document metadata, conversations, reminders and history, then loads Sahyadri Precision Works. It does not affect any government service.</p><div className="uw-dialog-actions"><button className="uw-button" onClick={exportStatus}><ArrowDownToLine size={15} />Export first</button><button className="uw-button" autoFocus onClick={close}>Cancel</button><button className="uw-button uw-danger" onClick={() => replace(createState())}>Reset system</button></div></>}</dialog>;
+}

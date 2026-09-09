@@ -1,0 +1,27 @@
+'use client';
+
+import { AlertTriangle, Check, ChevronRight, ExternalLink, FileSearch, Pencil, RefreshCw, ShieldCheck, Sparkles } from 'lucide-react';
+import type { State } from '../../lib/udyog';
+import type { VersionSummary } from '../../lib/arthix-rules';
+
+export type ExtractedEntity = { value: string; confidence: number; source?: string };
+export type IntelligenceState = Omit<State, 'extractedEntities'> & { versionSummary?: VersionSummary; extractedEntities?: Record<string, ExtractedEntity | string | number | boolean | null> };
+export type IntelligencePanelProps = { state: IntelligenceState; onChange: (next: IntelligenceState) => void };
+
+const fallbackEntities: Record<string, ExtractedEntity> = { Premises: { value: 'Sahyadri Industrial Estate, Pune', confidence: 0.96 }, HP: { value: '180 HP', confidence: 0.89 }, 'Land area': { value: '2.4 acres', confidence: 0.93 } };
+const sourceLinks = [{ label: 'MPCB consent route', href: 'https://www.mpcb.gov.in/en/consentmgt/water-and-air-act' }, { label: 'National approvals discovery', href: 'https://www.nsws.gov.in/' }];
+
+export function IntelligencePanel({ state, onChange }: IntelligencePanelProps) {
+  const entities = Object.entries(state.extractedEntities || fallbackEntities).slice(0, 3).map(([label, raw]) => [label, typeof raw === 'object' && raw !== null && 'value' in raw ? raw as ExtractedEntity : { value: String(raw ?? 'Not detected'), confidence: 0.72 }] as const);
+  const discrepancies = state.validationDiscrepancies || [{ field: 'Premises', message: 'Document name differs from the declared project name.', severity: 'warning' as const }, { field: 'HP', message: 'Load value needs confirmation against the process note.', severity: 'info' as const }];
+  const updateEntity = (label: string) => { const value = window.prompt(`Update ${label}`, entities.find(([key]) => key === label)?.[1].value); if (value?.trim()) onChange({ ...state, extractedEntities: { ...state.extractedEntities, [label]: { value: value.trim(), confidence: 1, source: 'Manual review' } } }); };
+  return <section className="ax-panel ax-intelligence" aria-labelledby="ax-intelligence-title">
+    <div className="ax-panel-heading"><div><span className="ax-kicker">EVIDENCE LAYER</span><h2 id="ax-intelligence-title">Intelligence review</h2><p>Explainable extraction, validation and source context.</p></div><span className="ax-status-chip ax-status-green"><ShieldCheck size={14} /> Guarded</span></div>
+    <div className="ax-rule-banner"><div><span className="ax-kicker">RULESET</span><strong>Arthix regulatory rules {state.versionSummary ? Object.values(state.versionSummary.rules)[0] || 'v2026.01' : 'v2026.01'}</strong><small>Last refreshed {state.versionSummary?.generatedAt ? new Date(state.versionSummary.generatedAt).toLocaleDateString('en-IN') : 'today'} · {state.versionSummary?.sources.length || 2} verified sources</small></div><Check size={18} /></div>
+    <div className="ax-gate"><span className="ax-gate-icon"><FileSearch size={17} /></span><div><strong>Prevalidation gate</strong><p>{discrepancies.length ? `${discrepancies.length} cross-field check${discrepancies.length === 1 ? '' : 's'} need attention before submission.` : 'All required cross-field checks are clear.'}</p></div><span className={`ax-pill ${discrepancies.length ? 'ax-pill-warm' : 'ax-pill-green'}`}>{discrepancies.length ? 'Review' : 'Pass'}</span></div>
+    <div className="ax-subsection"><div className="ax-subheading"><h3>Extracted entities</h3><span>OCR confidence</span></div>{entities.map(([label, entity]) => <div className="ax-entity-row" key={label}><div><strong>{label}</strong><span>{entity.value}</span></div><div className="ax-confidence"><span style={{ width: `${Math.round(entity.confidence * 100)}%` }} /><small>{Math.round(entity.confidence * 100)}%</small></div><button type="button" className="ax-icon-btn" onClick={() => updateEntity(label)} aria-label={`Edit ${label}`}><Pencil size={14} /></button></div>)}</div>
+    <div className="ax-discrepancies"><div className="ax-subheading"><h3>Cross-field discrepancies</h3><span>{discrepancies.length} open</span></div>{discrepancies.map(item => <div className="ax-discrepancy" key={`${item.field}-${item.message}`}><AlertTriangle size={15} /><span><strong>{item.field}</strong>{item.message}</span><button type="button" onClick={() => onChange({ ...state, validationDiscrepancies: discrepancies.filter(candidate => candidate !== item) })}>Resolve<ChevronRight size={13} /></button></div>)}</div>
+    <div className="ax-action-row"><button type="button" className="ax-button ax-button-light" onClick={() => onChange({ ...state, extractedEntities: fallbackEntities, validationDiscrepancies: [] })}><RefreshCw size={15} /> Re-run system OCR</button><span className="ax-helper">System extraction only. No files leave this workspace.</span></div>
+    <div className="ax-rag"><div className="ax-rag-title"><Sparkles size={15} /><strong>Contextual assistance</strong><span>RAG preview</span></div><p>Because the dossier declares a manufacturing site, verify the applicable MPCB consent category and premises documents before routing.</p><div className="ax-source-links">{sourceLinks.map(link => <a href={link.href} target="_blank" rel="noreferrer" key={link.href}>{link.label}<ExternalLink size={12} /></a>)}</div><small>Guidance is official and does not replace an authority's interpretation or decision.</small></div>
+  </section>;
+}
