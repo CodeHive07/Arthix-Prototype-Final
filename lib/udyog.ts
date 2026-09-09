@@ -42,11 +42,21 @@ export function requirements(p: Project): Requirement[] {
   return list;
 }
 
+// Document ids are canonical across the Rules Engine, Pre-Validation and the dossier checklist.
+export const documentLabels = { entity: 'Enterprise identity', site: 'Site & layout plan', process: 'Process & effluent note', controls: 'Pollution-control systems record', 'fire-plan': 'Fire safety plan', 'boiler-record': 'Boiler / heater record', 'water-balance': 'Water balance and groundwater note', 'load-sanction': 'Electricity load sanction', 'hazard-inventory': 'Hazardous material inventory', 'emergency-plan': 'Emergency response plan' };
+
+// When declared project facts change, the required document set changes with them. Regenerate the
+// checklist while preserving uploads so saved workspaces never desync from validState expectations.
+export function syncDocuments(project: Project, existing: Doc[]): Doc[] {
+  const needed = new Set([...requirements(project).flatMap(r => r.docs), ...canonicalRequiredDocuments(project)]);
+  return [...needed].map(id => existing.find(d => d.id === id) || { id, name: documentLabels[id as keyof typeof documentLabels] || id, file: '', size: 0, declaredName: project.name, checked: false });
+}
+
 export function createState(project?: Project): State {
   const sample = !project;
   const p: Project = project || { name: 'Sahyadri Precision Works', sector: 'Manufacturing', district: 'Pune', stage: 'Planning', workforce: 28, effluent: true, caseId: 'US-2026-0142' };
   const needed = new Set([...requirements(p).flatMap(r => r.docs), ...canonicalRequiredDocuments(p)]);
-  const labels = { entity: 'Enterprise identity', site: 'Site & layout plan', process: 'Process & effluent note', controls: 'Pollution-control systems record', 'fire-plan': 'Fire safety plan', 'boiler-record': 'Boiler / heater record', 'water-balance': 'Water balance and groundwater note', 'load-sanction': 'Electricity load sanction', 'hazard-inventory': 'Hazardous material inventory', 'emergency-plan': 'Emergency response plan' };
+  const labels = documentLabels;
   return { version: 1, project: p, documents: Object.entries(labels).filter(([id]) => needed.has(id)).map(([id, name]) => ({ id, name, file: sample && id === 'entity' ? 'enterprise-profile.pdf' : sample && id === 'site' ? 'site-layout-v1.pdf' : '', size: sample && ['entity', 'site'].includes(id) ? 184320 : 0, declaredName: sample && id === 'site' ? 'Sahyadri Engineering Works' : p.name, checked: sample && ['entity', 'site'].includes(id) })), applications: Object.fromEntries(requirements(p).filter(r => !r.advisory).map(r => [r.id, { status: 'draft', messages: [] }])), sources: [], inspections: [], grievances: [], saved: [], activity: [{ id: 'initial', at: new Date().toISOString(), role: 'System', text: sample ? 'Sample workspace created. Illustrative document metadata loaded; no files uploaded.' : 'Project created. Indicative checklist generated from declared project details.' }] };
 }
 

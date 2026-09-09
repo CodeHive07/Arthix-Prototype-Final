@@ -5,7 +5,9 @@ import { readSession } from '../lib/auth';
 import type { GetServerSideProps } from 'next';
 
 export const getServerSideProps: GetServerSideProps = async context => {
-  if (process.env.NODE_ENV === 'production' && !readSession(context.req as never)) return { props: { authenticated: false } };
+  // DEMO_MODE=1 allows prototype demonstrations on hosted environments without a live identity
+  // provider. It must never be combined with real user data or enabled in a production deployment.
+  if (process.env.NODE_ENV === 'production' && process.env.DEMO_MODE !== '1' && !readSession(context.req as never)) return { props: { authenticated: false } };
   return { props: { authenticated: true } };
 };
 

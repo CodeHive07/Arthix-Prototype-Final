@@ -215,8 +215,24 @@
 .uw-dossier-footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .uw-dossier-footer strong { display: block; margin-top: 5px; color: #315b47; font-size: 26px; letter-spacing: -1px; }
 .uw-dossier-footer small { display: block; margin-top: 4px; color: #7b8977; font-size: 9px; }
-@media (max-width: 800px) { .uw-prevalidation-grid { grid-template-columns: 1fr; } }
+@media (max-width: 800px) { .uw-prevalidation-grid, .uw-info-steps { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .uw-prevalidation-header, .uw-dossier-footer { display: block; } .uw-prevalidation-header .uw-dossier-status, .uw-dossier-footer .uw-button { display: inline-flex; margin-top: 15px; } }
+
+/* Applicant & Project Information section */
+.uw-info-view { display: grid; gap: 18px; }
+.uw-info-hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+.uw-info-hero > div { max-width: 640px; }
+.uw-info-hero h2 { font-size: 20px; letter-spacing: -.5px; margin: 8px 0 6px; }
+.uw-info-hero p { font-size: 11px; line-height: 1.8; color: #6f8b5e; margin: 0; }
+.uw-info-badge { display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto; padding: 8px 13px; border: 1px solid var(--uw-line); border-radius: 999px; font-size: 10px; font-weight: 600; letter-spacing: .04em; color: #4c6b3f; background: #f4f8f1; white-space: nowrap; }
+.uw-info-meter { height: 7px; background: #e5ebe3; border-radius: 999px; overflow: hidden; margin-bottom: 20px; }
+.uw-info-meter span { display: block; height: 100%; background: linear-gradient(90deg, #7ea664, #4c6b3f); border-radius: 999px; transition: width .3s ease; }
+.uw-info-note { display: flex; align-items: flex-start; gap: 9px; margin-top: 14px; padding: 11px 13px; border: 1px solid #ead9b0; background: #fbf6e7; border-radius: 9px; font-size: 10.5px; line-height: 1.7; color: #6d5a26; }
+.uw-info-note svg { flex: 0 0 auto; margin-top: 2px; }
+.uw-info-note-error { border-color: #e4b8b0; background: #fbeeea; color: #7c3f2c; }
+.uw-info-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.uw-info-flow { display: flex; gap: 10px; flex-wrap: wrap; }
+.uw-info-flow span { display: inline-flex; align-items: center; gap: 7px; padding: 8px 13px; border: 1px dashed var(--uw-line); border-radius: 999px; font-size: 10px; font-weight: 600; letter-spacing: .04em; color: #5c7e48; }
 @media (max-width: 900px) { .uw-rules-grid { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .uw-rules-hero { display: block; } .uw-rules-hero .uw-button { margin-top: 17px; } .uw-rules-metrics { grid-template-columns: 1fr; } .uw-source-registry article { grid-template-columns: 1fr; } .uw-source-date { grid-column: 1; } .uw-rule-project { display: block; } .uw-rule-project span { display: block; margin-top: 6px; } }
 .uw-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }

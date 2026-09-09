@@ -4,7 +4,7 @@ import { generateGroundedAnswer, llmProvider } from './llm-provider';
 import { retrieveOfficialPages } from './official-sources';
 
 export type RagCitation = { id: string; title: string; authority: string; url: string; version: string; relevance: number };
-export type RagAnswer = { answer: string; confidence: 'high' | 'medium' | 'low'; citations: RagCitation[]; matchedRules: string[]; boundaries: string[]; provider: 'deterministic' | 'openai' | 'groq' | 'ollama' | 'custom' };
+export type RagAnswer = { answer: string; confidence: 'high' | 'medium' | 'low'; citations: RagCitation[]; matchedRules: string[]; boundaries: string[]; provider: 'deterministic' | 'openai' | 'groq' | 'gemini' | 'ollama' | 'custom' };
 type Chunk = { id: string; text: string; title: string; authority: string; url: string; version: string; keywords: string[] };
 
 function chunks(project: ProjectData): Chunk[] {

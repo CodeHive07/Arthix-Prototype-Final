@@ -1,7 +1,7 @@
-import { analyzeArthixProject, regulatoryRules, type ArthixAnalysis, type ProjectData, type RegulatoryRule } from './arthix-rules';
+import { analyzeArthixProject, projectDataIssues, regulatoryRules, type ArthixAnalysis, type ProjectData, type RegulatoryRule } from './arthix-rules';
 
-export const RULES_ENGINE_VERSION = 'arthix-rules-maharashtra-v1.1.0';
-export const RULES_ENGINE_UPDATED_AT = '2026-09-08';
+export const RULES_ENGINE_VERSION = 'arthix-rules-maharashtra-v1.2.0';
+export const RULES_ENGINE_UPDATED_AT = '2026-09-09';
 
 export type SourceKey = 'arthix-rulebook' | 'data-gov-in' | 'mpcb' | 'midc' | 'udyam';
 export type SourceState = 'configured' | 'available' | 'not-configured' | 'reference-only' | 'error';
@@ -25,6 +25,9 @@ export function analyzeWithRulesEngine(project: ProjectData): ArthixAnalysis & {
   const analysis = analyzeArthixProject(project);
   return { ...analysis, engineVersion: RULES_ENGINE_VERSION, sourceKeys: ['arthix-rulebook', ...analysis.approvals.map(item => item.serviceId === 'mpcb' ? 'mpcb' : item.serviceId === 'power' ? 'midc' : 'arthix-rulebook')] };
 }
+
+// Convenience wrapper used by callers that only need the fact-quality verdict for a profile.
+export function projectFactQuality(project: ProjectData): { ok: boolean; warnings: string[] } { const warnings = projectDataIssues(project); return { ok: warnings.length === 0, warnings }; }
 
 export function normalizeOgdRows(rows: unknown[]): { id: string; label: string; value: string; source: SourceKey }[] {
   return rows.flatMap((row, index) => {

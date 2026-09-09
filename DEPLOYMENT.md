@@ -29,6 +29,23 @@ Before starting the app, replace `OIDC_CLIENT_SECRET` in `.env.local` with the c
 
 The compose stack creates the private `arthix-documents` bucket. It uses local-only credentials and must not be exposed to the internet or reused in production.
 
+## Hosted prototype (Vercel quick deploy)
+
+For demonstrations without a live identity provider, the prototype can be hosted on Vercel:
+
+1. Push the repository to GitHub (`.env.local` is gitignored; never commit secrets).
+2. Import the repository on [vercel.com](https://vercel.com) — Next.js settings are auto-detected.
+3. Set these environment variables in the Vercel project (Production + Preview):
+   - `DEMO_MODE=1` — skips the production sign-in gate for prototype demonstrations. Never enable with real user data.
+   - `OPENAI_API_KEY` — Gemini API key (Google AI Studio).
+   - `OPENAI_MODEL=gemini-3.5-flash`
+   - `OPENAI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
+   - `APP_URL=https://your-project.vercel.app`
+4. Deploy. `DATABASE_URL`, S3 and Keycloak variables are optional for a prototype; the workspace then uses browser storage and in-memory cases, and the Compliance Assistant falls back to deterministic retrieval if the LLM is unreachable.
+5. Verify `https://your-project.vercel.app/api/health` returns ok and the dashboard loads without the sign-in screen.
+
+For a full production deployment (real users, persistent data), follow the production prerequisites below instead — `DEMO_MODE` must not be set.
+
 ## Production prerequisites
 
 Configure the variables in `.env.example` through the hosting provider's secret manager. Do not commit `.env` files or expose server secrets with `NEXT_PUBLIC_` names.

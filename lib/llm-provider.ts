@@ -3,7 +3,7 @@ import type { RagCitation } from './rag-engine';
 export type GroundedLlmRequest = { query: string; context: string; citations: RagCitation[] };
 export type GroundedLlmResponse = { answer: string; citedSourceIds: string[]; confidence: 'high' | 'medium' | 'low' };
 
-export type LlmProviderLabel = 'openai' | 'groq' | 'ollama' | 'custom' | 'none';
+export type LlmProviderLabel = 'openai' | 'groq' | 'gemini' | 'ollama' | 'custom' | 'none';
 
 export function llmProvider(): { label: LlmProviderLabel; baseUrl: string; apiKey: string } | null {
   const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1/chat/completions';
@@ -12,7 +12,7 @@ export function llmProvider(): { label: LlmProviderLabel; baseUrl: string; apiKe
   const local = host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
   const apiKey = process.env.OPENAI_API_KEY || (local ? 'ollama-local' : '');
   if (!apiKey) return null;
-  const label: LlmProviderLabel = host.includes('groq') ? 'groq' : local ? 'ollama' : host.includes('openai.com') ? 'openai' : 'custom';
+  const label: LlmProviderLabel = host.includes('groq') ? 'groq' : host.includes('generativelanguage.googleapis.com') ? 'gemini' : local ? 'ollama' : host.includes('openai.com') ? 'openai' : 'custom';
   return { label, baseUrl, apiKey };
 }
 
