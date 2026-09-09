@@ -1,6 +1,6 @@
-# Arthix
+# Arthix-Prototype-Final
 
-Industrial approvals and compliance workspace for Maharashtra, built with Next.js (Pages Router), TypeScript, Tailwind CSS and React Flow.
+Explainable industrial approvals and compliance workspace for Maharashtra, helping applicants understand requirements, prepare dossiers, and coordinate next steps. Built with Next.js (Pages Router), TypeScript, Tailwind CSS and React Flow.
 
 ## Quick start
 
